@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Smart Greenhouse Dashboard</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #0f172a;
+      color: white;
+      text-align: center;
+      margin: 0;
+    }
+
+    h1 {
+      margin-top: 20px;
+    }
+
+    p {
+      color: #94a3b8;
+      max-width: 600px;
+      margin: auto;
+    }
+
+    .container {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 20px;
+      padding: 20px;
+    }
+
+    .card {
+      background: #1e293b;
+      padding: 20px;
+      border-radius: 16px;
+      box-shadow: 0 0 15px rgba(0,255,200,0.15);
+      transition: 0.3s;
+    }
+
+    .card:hover {
+      transform: translateY(-5px) scale(1.03);
+    }
+
+    .value {
+      font-size: 26px;
+      font-weight: bold;
+      margin-top: 10px;
+    }
+
+    .status {
+      margin-top: 5px;
+      font-size: 14px;
+    }
+
+    .normal { color: #22c55e; }
+    .high { color: #ef4444; }
+    .low { color: #3b82f6; }
+
+    canvas {
+      margin: 20px;
+      background: #1e293b;
+      border-radius: 12px;
+      padding: 10px;
+    }
+  </style>
+</head>
+
+<body>
+
+<h1>🌱 Smart Greenhouse Dashboard</h1>
+
+<p>
+Smart Greenhouse Monitoring System using IoT simulation.
+This dashboard visualizes real-time environmental data such as CO₂,
+temperature, humidity, and soil moisture.
+</p>
+
+<div class="container">
+  <div class="card">
+    <h3>CO₂</h3>
+    <div id="co2" class="value">-</div>
+  </div>
+
+  <div class="card">
+    <h3>Temperature</h3>
+    <div id="temp" class="value">-</div>
+    <div id="tempStatus" class="status"></div>
+  </div>
+
+  <div class="card">
+    <h3>Humidity</h3>
+    <div id="hum" class="value">-</div>
+  </div>
+
+  <div class="card">
+    <h3>Soil</h3>
+    <div id="soil" class="value">-</div>
+  </div>
+</div>
+
+<canvas id="chart" width="400" height="200"></canvas>
+
+<script>
+let chart;
+
+function getTempStatus(value) {
+  if (value > 30) return { text: "🔥 High", class: "high" };
+  if (value < 18) return { text: "❄️ Low", class: "low" };
+  return { text: "✅ Normal", class: "normal" };
+}
+
+function updateUI(data) {
+  document.getElementById("co2").innerText = data.co2 + " ppm";
+  document.getElementById("temp").innerText = data.temperature + " °C";
+
+  const status = getTempStatus(data.temperature);
+  const statusEl = document.getElementById("tempStatus");
+  statusEl.innerText = status.text;
+  statusEl.className = "status " + status.class;
+
+  document.getElementById("hum").innerText = data.humidity + " %";
+  document.getElementById("soil").innerText = data.soil + " %";
+}
+
+function generateDummyData() {
+  return {
+    co2: Math.floor(Math.random() * 2000),
+    temperature: parseFloat((20 + Math.random() * 10).toFixed(1)),
+    humidity: (40 + Math.random() * 30).toFixed(1),
+    soil: (20 + Math.random() * 60).toFixed(1)
+  };
+}
+
+function initChart() {
+  const ctx = document.getElementById("chart").getContext("2d");
+  chart = new Chart(ctx, {
+    type: "line",
+    data: {
+      labels: [],
+      datasets: [{
+        label: "Temperature (°C)",
+        data: [],
+        tension: 0.4
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: {
+          labels: { color: "white" }
+        }
+      },
+      scales: {
+        x: {
+          ticks: { color: "white" }
+        },
+        y: {
+          ticks: { color: "white" }
+        }
+      }
+    }
+  });
+}
+
+function updateChart(temp) {
+  const time = new Date().toLocaleTimeString();
+  chart.data.labels.push(time);
+  chart.data.datasets[0].data.push(temp);
+
+  if (chart.data.labels.length > 10) {
+    chart.data.labels.shift();
+    chart.data.datasets[0].data.shift();
+  }
+
+  chart.update();
+}
+
+function loop() {
+  const data = generateDummyData();
+  updateUI(data);
+  updateChart(data.temperature);
+}
+
+initChart();
+setInterval(loop, 3000);
+</script>
+
+</body>
+</html>
